@@ -86,10 +86,14 @@ The state shape is:
 verse → word token → Strong's ID → lexicon entry → related IDs
 ```
 
-The source and attribution details are in `data/SOURCES.md`.
+The source and attribution details, including the separate upstream licenses,
+are in [`data/SOURCES.md`](data/SOURCES.md). Keep that notice with the data if
+you redistribute the app.
 
 ## License
 
 The application code and launcher icon are MIT licensed. The bundled Bible and
-Strong's data retain the source licenses and attributions documented in
-`data/SOURCES.md`.
+Strong's data are third-party materials with separate upstream licenses and
+attribution requirements; they are not relicensed under MIT. See
+[`data/SOURCES.md`](data/SOURCES.md) for the source repositories, notices, and
+license links.

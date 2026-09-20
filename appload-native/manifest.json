@@ -1,0 +1,10 @@
+{
+    "id": "word-study",
+    "name": "The Word",
+    "loadsBackend": true,
+    "entry": "/ui/Main.qml",
+    "supportsScaling": true,
+    "canHaveMultipleFrontends": false,
+    "aspectRatio": "auto",
+    "disablesWindowedMode": true
+}

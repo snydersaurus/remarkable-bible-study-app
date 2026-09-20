@@ -1,0 +1,7 @@
+<RCC>
+    <qresource>
+        <file>ui/Main.qml</file>
+        <file>ui/Board.qml</file>
+        <file>ui/WordToken.qml</file>
+    </qresource>
+</RCC>

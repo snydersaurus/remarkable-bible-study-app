@@ -1,7 +1,7 @@
-# Word Study app notes
+# The Word app notes
 
 This is a native AppLoad/QML app for the reMarkable Paper Pro Move. It follows
-the device and packaging conventions in `../football-scoreboard/docs/PLATFORM.md`.
+the device and packaging conventions in [docs/PLATFORM.md](docs/PLATFORM.md).
 
 ## Current state
 

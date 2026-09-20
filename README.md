@@ -13,6 +13,20 @@ Move. The current build includes:
 - a desktop preview and screenshot mode
 - a frontend/backend AppLoad split with a compact bundled corpus
 
+## Install a release
+
+The easiest install is a release zip. After downloading and unzipping it on a
+machine with SSH access to the tablet:
+
+```bash
+RM_HOST=10.11.99.1 ./install.sh
+ssh root@10.11.99.1 'systemctl restart xochitl'
+```
+
+Then open the AppLoad sidebar and tap **The Word**. The restart is required
+because AppLoad reads manifests, icons, and frontend bundles when xochitl
+starts.
+
 ## Preview
 
 The machine used to author this app does not have Qt installed. On a machine
@@ -20,22 +34,31 @@ with Qt 6.4 or newer:
 
 ```bash
 brew install qt ninja
-cmake -S . -B build -G Ninja -DCMAKE_PREFIX_PATH="$(brew --prefix qt)"
-cmake --build build
-./build/word_study
+./preview.sh
 ```
 
-That opens a small interactive desktop preview. For an exact-size Move
+That builds and opens the interactive desktop preview. For an exact-size Move
 screenshot:
 
 ```bash
-./build/word_study --panel 954x1696 --shot /tmp/word-study-move.png
+./preview.sh --panel 954x1696 --shot /tmp/word-study-move.png
 open /tmp/word-study-move.png
 ```
 
-The existing sibling apps document the Paper Pro SDK and AppLoad deployment
-workflow in `../football-scoreboard/docs/PLATFORM.md`. The release build for
-this app should use an SDK no newer than the tablet's Qt version.
+## Building and deploying from source
+
+The release build needs Docker and an SDK no newer than the tablet's Qt
+version. The normal build uses the cached Paper Pro Move SDK:
+
+```bash
+IMAGE=rmpp-sdk-5.7 ./build.sh
+./package.sh
+RM_HOST=10.11.99.1 ./deploy.sh
+```
+
+`package.sh` writes `dist/word-study.zip`, which contains a standalone
+installer and the offline Bible data. See [docs/PLATFORM.md](docs/PLATFORM.md)
+for the device, SDK, AppLoad, and e-ink constraints behind these commands.
 
 ## Data bundle
 
@@ -52,3 +75,9 @@ verse → word token → Strong's ID → lexicon entry → related IDs
 ```
 
 The source and attribution details are in `data/SOURCES.md`.
+
+## License
+
+The application code and launcher icon are MIT licensed. The bundled Bible and
+Strong's data retain the source licenses and attributions documented in
+`data/SOURCES.md`.

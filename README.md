@@ -13,6 +13,18 @@ Move. The current build includes:
 - a desktop preview and screenshot mode
 - a frontend/backend AppLoad split with a compact bundled corpus
 
+## Screenshots
+
+These photos show the app running on a reMarkable Paper Pro Move:
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/reading-view.jpg" alt="The Word reading view showing Genesis chapter 1" width="260"><br><sub>Chapter reading view</sub></td>
+    <td align="center"><img src="docs/images/word-study.jpg" alt="The Word word study view showing a Strong's entry and occurrences" width="260"><br><sub>Word study and Strong's lookup</sub></td>
+    <td align="center"><img src="docs/images/browse.jpg" alt="The Word browse view showing book, chapter, and verse selectors" width="260"><br><sub>Book, chapter, and verse browser</sub></td>
+  </tr>
+</table>
+
 ## Install a release
 
 The easiest install is a release zip. After downloading and unzipping it on a

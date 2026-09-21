@@ -8,6 +8,9 @@ Rectangle {
     property string searchDraft: ""
     property string browseBook: ""
     property int browseChapter: 1
+    // The Paper Pro uses the full fixed canvas. The desktop preview opts into
+    // a separate compact layout so it remains readable beside a notes app.
+    property bool compactMode: false
 
     signal wordSelected(int index)
     signal strongSelected(string strongId)
@@ -20,6 +23,7 @@ Rectangle {
     property int reportedOccurrencePageSize: 0
 
     readonly property bool landscape: width > height
+    readonly property bool splitStudy: landscape && !compactMode
     readonly property color paper: "#FFFFFF"
     readonly property color ink: "#000000"
     readonly property color faint: "#5A5A5A"
@@ -112,53 +116,54 @@ Rectangle {
 
     Item {
         id: canvas
-        width: root.canvasW
-        height: root.canvasH
+        width: root.compactMode ? root.width : root.canvasW
+        height: root.compactMode ? root.height : root.canvasH
         anchors.centerIn: parent
-        scale: Math.min(root.width / width, root.height / height)
+        scale: root.compactMode ? 1 : Math.min(root.width / width, root.height / height)
 
         Column {
             id: shell
             anchors.fill: parent
-            anchors.leftMargin: 68
-            anchors.rightMargin: 68
-            anchors.topMargin: 52
-            anchors.bottomMargin: 42
+            anchors.leftMargin: root.compactMode ? 24 : 68
+            anchors.rightMargin: root.compactMode ? 24 : 68
+            anchors.topMargin: root.compactMode ? 24 : 52
+            anchors.bottomMargin: root.compactMode ? 24 : 42
             spacing: 0
 
             Item {
+                id: headerBar
                 width: parent.width
-                height: 124
+                height: root.compactMode ? 78 : 124
 
                 Text {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     text: "THE WORD"
                     color: root.ink
-                    font.pixelSize: 44
+                    font.pixelSize: root.compactMode ? 30 : 44
                     font.weight: Font.Bold
-                    font.letterSpacing: 5
+                    font.letterSpacing: root.compactMode ? 3 : 5
                 }
 
                 Row {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 12
+                    spacing: root.compactMode ? 8 : 12
 
                     Rectangle {
-                        width: 150
-                        height: 68
+                        width: root.compactMode ? 92 : 150
+                        height: root.compactMode ? 46 : 68
                         color: root.mode === "read" ? root.ink : root.paper
-                        border.width: 4
+                        border.width: root.compactMode ? 2 : 4
                         border.color: root.ink
 
                         Text {
                             anchors.centerIn: parent
                             text: "READ"
                             color: root.mode === "read" ? root.paper : root.ink
-                            font.pixelSize: 28
+                            font.pixelSize: root.compactMode ? 16 : 28
                             font.weight: Font.Bold
-                            font.letterSpacing: 2
+                            font.letterSpacing: root.compactMode ? 1 : 2
                         }
                         MouseArea {
                             anchors.fill: parent
@@ -167,19 +172,19 @@ Rectangle {
                     }
 
                     Rectangle {
-                        width: 176
-                        height: 68
+                        width: root.compactMode ? 108 : 176
+                        height: root.compactMode ? 46 : 68
                         color: root.mode === "browse" ? root.ink : root.paper
-                        border.width: 4
+                        border.width: root.compactMode ? 2 : 4
                         border.color: root.ink
 
                         Text {
                             anchors.centerIn: parent
                             text: "BROWSE"
                             color: root.mode === "browse" ? root.paper : root.ink
-                            font.pixelSize: 28
+                            font.pixelSize: root.compactMode ? 16 : 28
                             font.weight: Font.Bold
-                            font.letterSpacing: 2
+                            font.letterSpacing: root.compactMode ? 1 : 2
                         }
                         MouseArea {
                             anchors.fill: parent
@@ -192,22 +197,23 @@ Rectangle {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
-                    height: 5
+                    height: root.compactMode ? 2 : 5
                     color: root.ink
                 }
             }
 
             Item {
+                id: searchRow
                 width: parent.width
-                height: 94
+                height: root.compactMode ? 70 : 94
 
                 Rectangle {
                     anchors.left: parent.left
                     anchors.right: searchButton.left
-                    anchors.rightMargin: 12
+                    anchors.rightMargin: root.compactMode ? 8 : 12
                     anchors.verticalCenter: parent.verticalCenter
-                    height: 70
-                    border.width: 4
+                    height: root.compactMode ? 48 : 70
+                    border.width: root.compactMode ? 2 : 4
                     border.color: root.faint
                     color: root.paper
 
@@ -216,11 +222,13 @@ Rectangle {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        anchors.leftMargin: 20
-                        anchors.rightMargin: searchDoneButton.visible ? 126 : 20
+                        anchors.leftMargin: root.compactMode ? 12 : 20
+                        anchors.rightMargin: searchDoneButton.visible
+                                           ? (root.compactMode ? 82 : 126)
+                                           : (root.compactMode ? 12 : 20)
                         text: root.searchDraft
                         color: root.ink
-                        font.pixelSize: 34
+                        font.pixelSize: root.compactMode ? 20 : 34
                         selectByMouse: true
                         clip: true
                         onTextChanged: root.searchDraft = text
@@ -231,7 +239,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             text: "Search verse or reference"
                             color: root.faint
-                            font.pixelSize: 32
+                            font.pixelSize: root.compactMode ? 18 : 32
                             visible: searchInput.text.length === 0
                         }
                     }
@@ -240,19 +248,19 @@ Rectangle {
                         id: searchDoneButton
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        anchors.rightMargin: 10
-                        width: 104
-                        height: 54
+                        anchors.rightMargin: root.compactMode ? 6 : 10
+                        width: root.compactMode ? 70 : 104
+                        height: root.compactMode ? 38 : 54
                         visible: searchInput.activeFocus
                         color: root.paper
-                        border.width: 3
+                        border.width: root.compactMode ? 2 : 3
                         border.color: root.ink
 
                         Text {
                             anchors.centerIn: parent
                             text: "DONE"
                             color: root.ink
-                            font.pixelSize: 20
+                            font.pixelSize: root.compactMode ? 14 : 20
                             font.weight: Font.Bold
                         }
                         MouseArea {
@@ -266,17 +274,17 @@ Rectangle {
                     id: searchButton
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 166
-                    height: 70
+                    width: root.compactMode ? 104 : 166
+                    height: root.compactMode ? 48 : 70
                     color: root.ink
 
                     Text {
                         anchors.centerIn: parent
                         text: "SEARCH"
                         color: root.paper
-                        font.pixelSize: 28
+                        font.pixelSize: root.compactMode ? 17 : 28
                         font.weight: Font.Bold
-                        font.letterSpacing: 2
+                        font.letterSpacing: root.compactMode ? 1 : 2
                     }
                     MouseArea {
                         anchors.fill: parent
@@ -286,11 +294,12 @@ Rectangle {
             }
 
             Text {
+                id: searchStatus
                 width: parent.width
                 height: 34
                 text: root.v("searchStatus", "")
                 color: root.accent
-                font.pixelSize: 26
+                font.pixelSize: root.compactMode ? 16 : 26
                 font.weight: Font.Bold
                 visible: text.length > 0
             }
@@ -298,36 +307,36 @@ Rectangle {
             Item {
                 id: referenceBar
                 width: parent.width
-                height: 114
+                height: root.compactMode ? 78 : 114
 
                 Text {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.v("reference", "Genesis 1:1")
                     color: root.ink
-                    font.pixelSize: root.landscape ? 70 : 64
+                    font.pixelSize: root.compactMode ? 38 : (root.landscape ? 70 : 64)
                     font.weight: Font.Bold
                 }
 
                 Text {
                     anchors.right: prevButton.left
-                    anchors.rightMargin: 28
+                    anchors.rightMargin: root.compactMode ? 12 : 28
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.mode === "read" ? "READING VIEW" : root.v("corpusStatus", "DEMO CORPUS")
                     color: root.faint
-                    font.pixelSize: 27
+                    font.pixelSize: root.compactMode ? 16 : 27
                     font.weight: Font.Bold
-                    font.letterSpacing: 2
+                    font.letterSpacing: root.compactMode ? 1 : 2
                 }
 
                 Rectangle {
                     id: prevButton
                     anchors.right: nextButton.left
-                    anchors.rightMargin: 10
+                    anchors.rightMargin: root.compactMode ? 6 : 10
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 68
-                    height: 68
-                    border.width: 4
+                    width: root.compactMode ? 44 : 68
+                    height: root.compactMode ? 44 : 68
+                    border.width: root.compactMode ? 2 : 4
                     border.color: (root.mode === "read"
                                    ? root.v("canPrevChapter", false)
                                    : root.v("canPrev", false))
@@ -338,7 +347,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "‹"
                         color: prevButton.border.color
-                        font.pixelSize: 60
+                        font.pixelSize: root.compactMode ? 38 : 60
                         font.weight: Font.Bold
                     }
                     MouseArea {
@@ -355,9 +364,9 @@ Rectangle {
                     id: nextButton
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 68
-                    height: 68
-                    border.width: 4
+                    width: root.compactMode ? 44 : 68
+                    height: root.compactMode ? 44 : 68
+                    border.width: root.compactMode ? 2 : 4
                     border.color: (root.mode === "read"
                                    ? root.v("canNextChapter", false)
                                    : root.v("canNext", false))
@@ -368,7 +377,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "›"
                         color: nextButton.border.color
-                        font.pixelSize: 60
+                        font.pixelSize: root.compactMode ? 38 : 60
                         font.weight: Font.Bold
                     }
                     MouseArea {
@@ -385,7 +394,8 @@ Rectangle {
             Item {
                 id: content
                 width: parent.width
-                height: parent.height - 124 - 94 - 34 - referenceBar.height - 58
+                height: parent.height - headerBar.height - searchRow.height
+                        - searchStatus.height - referenceBar.height - footerBar.height
 
                 Item {
                     id: studyView
@@ -396,8 +406,8 @@ Rectangle {
                         id: versePanel
                         x: 0
                         y: 0
-                        width: root.landscape ? parent.width * 0.54 : parent.width
-                        height: root.landscape ? parent.height : parent.height * 0.44
+                        width: root.splitStudy ? parent.width * 0.54 : parent.width
+                        height: root.splitStudy ? parent.height : parent.height * 0.40
 
                         Flow {
                             anchors.left: parent.left
@@ -416,7 +426,8 @@ Rectangle {
                                     label: modelData.text
                                     tagged: modelData.tagged
                                     selected: index === root.v("selectedIndex", 0)
-                                    textSize: root.landscape ? 54 : 60
+                                    textSize: root.compactMode ? 36
+                                                               : (root.landscape ? 54 : 60)
                                     implicitHeight: textSize * 1.5
                                     ink: root.ink
                                     rule: root.faint
@@ -428,19 +439,27 @@ Rectangle {
                     }
 
                     Rectangle {
-                        x: root.landscape ? content.width * 0.54 + 34 : 0
-                        y: root.landscape ? 0 : content.height * 0.44 + 28
-                        width: root.landscape ? 5 : content.width
-                        height: root.landscape ? content.height : 5
+                        x: root.splitStudy ? content.width * 0.54 + 34 : 0
+                        y: root.splitStudy ? 0 : content.height * 0.40 + 20
+                        width: root.splitStudy ? 5 : content.width
+                        height: root.splitStudy ? content.height : 3
                         color: root.faint
                     }
 
-                    Item {
+                    Flickable {
                         id: details
-                        x: root.landscape ? content.width * 0.54 + 76 : 0
-                        y: root.landscape ? 0 : content.height * 0.44 + 54
-                        width: root.landscape ? content.width * 0.46 - 76 : content.width
-                        height: root.landscape ? content.height : content.height * 0.56 - 54
+                        x: root.splitStudy ? content.width * 0.54 + 76 : 0
+                        y: root.splitStudy ? 0 : content.height * 0.40 + 40
+                        width: root.splitStudy ? content.width * 0.46 - 76 : content.width
+                        height: root.splitStudy ? content.height : content.height * 0.60 - 40
+                        contentWidth: width
+                        contentHeight: root.compactMode
+                                      ? Math.max(height, occurrencePager.y
+                                                 + occurrencePager.height + 24)
+                                      : height
+                        interactive: root.compactMode
+                        flickableDirection: Flickable.VerticalFlick
+                        boundsBehavior: Flickable.StopAtBounds
                         clip: true
 
                         Item {
@@ -448,26 +467,27 @@ Rectangle {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.top: parent.top
-                            height: root.v("canGoBack", false) ? 74 : 0
+                            height: root.v("canGoBack", false)
+                                    ? (root.compactMode ? 58 : 74) : 0
 
                             Rectangle {
                                 id: backButton
                                 visible: root.v("canGoBack", false)
                                 anchors.right: parent.right
                                 anchors.top: parent.top
-                                width: 300
-                                height: 56
+                                width: root.compactMode ? 190 : 300
+                                height: root.compactMode ? 44 : 56
                                 color: root.paper
-                                border.width: 4
+                                border.width: root.compactMode ? 2 : 4
                                 border.color: root.ink
 
                                 Text {
                                     anchors.centerIn: parent
                                     text: "BACK TO WORD  ›"
                                     color: root.ink
-                                    font.pixelSize: 24
+                                    font.pixelSize: root.compactMode ? 16 : 24
                                     font.weight: Font.Bold
-                                    font.letterSpacing: 1
+                                    font.letterSpacing: root.compactMode ? 0 : 1
                                 }
                                 MouseArea {
                                     anchors.fill: parent
@@ -482,13 +502,14 @@ Rectangle {
                             anchors.right: parent.right
                             anchors.top: detailToolbar.bottom
                             anchors.topMargin: root.v("canGoBack", false) ? 12 : 0
-                            height: root.landscape ? 62 : 72
-                            spacing: 18
+                            height: root.compactMode ? 48 : (root.landscape ? 62 : 72)
+                            spacing: root.compactMode ? 10 : 18
 
                             Text {
                                 text: root.v("selectedWord", {}).text || "Tap a word"
                                 color: root.ink
-                                font.pixelSize: root.landscape ? 54 : 60
+                                font.pixelSize: root.compactMode ? 38
+                                                               : (root.landscape ? 54 : 60)
                                 font.weight: Font.Bold
                             }
 
@@ -496,7 +517,7 @@ Rectangle {
                                 text: root.selected("strongId", "")
                                 visible: text.length > 0
                                 color: root.ink
-                                font.pixelSize: 46
+                                font.pixelSize: root.compactMode ? 30 : 46
                                 font.weight: Font.Bold
                                 anchors.baseline: parent.children[0].baseline
                             }
@@ -514,7 +535,7 @@ Rectangle {
                                      ? root.selected("pronunciation", "")
                                      : "Transliteration not available")
                             color: root.ink
-                            font.pixelSize: 34
+                            font.pixelSize: root.compactMode ? 24 : 34
                             font.weight: Font.Bold
                             elide: Text.ElideRight
                         }
@@ -530,7 +551,7 @@ Rectangle {
                                      ? "  ·  " + root.selected("partOfSpeech", "") : "")
                             visible: root.selected("strongId", "").length > 0
                             color: root.faint
-                            font.pixelSize: 28
+                            font.pixelSize: root.compactMode ? 18 : 28
                             font.weight: Font.Bold
                             elide: Text.ElideRight
                         }
@@ -546,10 +567,10 @@ Rectangle {
                                     + root.selected("usageOutline", root.selected("gloss", ""))
                                   : "Select a word for its entry"
                             color: root.ink
-                            font.pixelSize: 34
+                            font.pixelSize: root.compactMode ? 23 : 34
                             font.weight: Font.Bold
                             wrapMode: Text.WordWrap
-                            maximumLineCount: root.landscape ? 1 : 2
+                            maximumLineCount: root.compactMode ? -1 : (root.landscape ? 1 : 2)
                             elide: Text.ElideRight
                         }
 
@@ -561,9 +582,10 @@ Rectangle {
                             anchors.topMargin: 10
                             text: root.selected("definition", "")
                             color: root.ink
-                            font.pixelSize: root.landscape ? 28 : 32
+                            font.pixelSize: root.compactMode ? 18
+                                                           : (root.landscape ? 28 : 32)
                             wrapMode: Text.WordWrap
-                            maximumLineCount: root.landscape ? 2 : 3
+                            maximumLineCount: root.compactMode ? -1 : (root.landscape ? 2 : 3)
                             elide: Text.ElideRight
                         }
 
@@ -579,10 +601,11 @@ Rectangle {
                                      : "Not supplied")
                             visible: root.selected("strongId", "").length > 0
                             color: root.faint
-                            font.pixelSize: root.landscape ? 25 : 28
+                            font.pixelSize: root.compactMode ? 17
+                                                           : (root.landscape ? 25 : 28)
                             font.weight: Font.Bold
                             wrapMode: Text.WordWrap
-                            maximumLineCount: root.landscape ? 1 : 2
+                            maximumLineCount: root.compactMode ? -1 : (root.landscape ? 1 : 2)
                             elide: Text.ElideRight
                         }
 
@@ -594,7 +617,7 @@ Rectangle {
                             text: "RELATED / LEXICAL FAMILY"
                             visible: root.selected("relatedEntries", []).length > 0
                             color: root.faint
-                            font.pixelSize: 26
+                            font.pixelSize: root.compactMode ? 16 : 26
                             font.weight: Font.Bold
                             font.letterSpacing: 2
                             elide: Text.ElideRight
@@ -624,7 +647,7 @@ Rectangle {
                                         anchors.centerIn: parent
                                         text: modelData.label
                                         color: root.ink
-                                        font.pixelSize: 27
+                                        font.pixelSize: root.compactMode ? 19 : 27
                                         font.weight: Font.Bold
                                     }
                                     MouseArea {
@@ -655,7 +678,7 @@ Rectangle {
                             anchors.right: parent.right
                             anchors.top: occurrencesLabel.bottom
                             anchors.topMargin: 6
-                            anchors.bottom: occurrencePager.top
+                            anchors.bottom: root.compactMode ? undefined : occurrencePager.top
                             clip: true
                             spacing: 10
                             interactive: false
@@ -678,7 +701,7 @@ Rectangle {
                                     anchors.rightMargin: 14
                                     text: modelData.reference + "  ·  " + modelData.text
                                     color: root.ink
-                                    font.pixelSize: 26
+                                    font.pixelSize: root.compactMode ? 18 : 26
                                     font.weight: Font.Bold
                                     elide: Text.ElideRight
                                 }
@@ -692,26 +715,35 @@ Rectangle {
                             }
                         }
 
+                        Binding {
+                            target: occurrencesList
+                            property: "height"
+                            value: Math.max(0, root.v("occurrences", []).length * 68 - 10)
+                            when: root.compactMode
+                        }
+
                         Item {
                             id: occurrencePager
                             anchors.left: parent.left
                             anchors.right: parent.right
-                            anchors.bottom: parent.bottom
-                            height: 72
+                            anchors.top: root.compactMode ? occurrencesList.bottom : undefined
+                            anchors.topMargin: root.compactMode ? 12 : 0
+                            anchors.bottom: root.compactMode ? undefined : parent.bottom
+                            height: root.compactMode ? 58 : 72
                             visible: root.selected("strongId", "").length > 0
                                      && root.v("occurrenceTotal", 0) > 0
 
                             Row {
                                 anchors.fill: parent
-                                spacing: 12
+                                spacing: root.compactMode ? 8 : 12
 
                                 Rectangle {
                                     id: previousOccurrencePage
-                                    width: 170
-                                    height: 64
+                                    width: root.compactMode ? 112 : 170
+                                    height: root.compactMode ? 50 : 64
                                     anchors.verticalCenter: parent.verticalCenter
                                     color: root.paper
-                                    border.width: 4
+                                    border.width: root.compactMode ? 2 : 4
                                     border.color: root.v("canPrevOccurrencePage", false)
                                                   ? root.ink : root.faint
 
@@ -719,7 +751,7 @@ Rectangle {
                                         anchors.centerIn: parent
                                         text: "PREV"
                                         color: previousOccurrencePage.border.color
-                                        font.pixelSize: 24
+                                        font.pixelSize: root.compactMode ? 15 : 24
                                         font.weight: Font.Bold
                                         font.letterSpacing: 1
                                     }
@@ -731,13 +763,14 @@ Rectangle {
                                 }
 
                                 Text {
-                                    width: Math.max(0, occurrencePager.width - 364)
-                                    height: 64
+                                    width: Math.max(0, occurrencePager.width
+                                                       - (root.compactMode ? 240 : 364))
+                                    height: root.compactMode ? 50 : 64
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "PAGE " + (root.v("occurrencePage", 0) + 1)
                                           + " / " + root.v("occurrencePageCount", 1)
                                     color: root.faint
-                                    font.pixelSize: 24
+                                    font.pixelSize: root.compactMode ? 15 : 24
                                     font.weight: Font.Bold
                                     font.letterSpacing: 1
                                     horizontalAlignment: Text.AlignHCenter
@@ -746,11 +779,11 @@ Rectangle {
 
                                 Rectangle {
                                     id: nextOccurrencePage
-                                    width: 170
-                                    height: 64
+                                    width: root.compactMode ? 112 : 170
+                                    height: root.compactMode ? 50 : 64
                                     anchors.verticalCenter: parent.verticalCenter
                                     color: root.paper
-                                    border.width: 4
+                                    border.width: root.compactMode ? 2 : 4
                                     border.color: root.v("canNextOccurrencePage", false)
                                                   ? root.ink : root.faint
 
@@ -758,7 +791,7 @@ Rectangle {
                                         anchors.centerIn: parent
                                         text: "NEXT"
                                         color: nextOccurrencePage.border.color
-                                        font.pixelSize: 24
+                                        font.pixelSize: root.compactMode ? 15 : 24
                                         font.weight: Font.Bold
                                         font.letterSpacing: 1
                                     }
@@ -1090,8 +1123,9 @@ Rectangle {
             }
 
             Item {
+                id: footerBar
                 width: parent.width
-                height: 58
+                height: root.compactMode ? 44 : 58
 
                 Text {
                     visible: false

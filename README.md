@@ -49,8 +49,8 @@ brew install qt ninja
 ./preview.sh
 ```
 
-That builds and opens the interactive desktop preview. For an exact-size Move
-screenshot:
+That builds and opens the interactive desktop preview in a compact, readable
+window that can sit beside a notes app. For an exact-size Move screenshot:
 
 ```bash
 ./preview.sh --panel 954x1696 --shot /tmp/word-study-move.png

@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QHash>
 #include <QList>
+#include <QSettings>
 #include <QString>
 #include <QStringList>
 #include <QVariantList>
@@ -26,6 +27,7 @@ public:
     Q_INVOKABLE void setOccurrencePageSize(int size);
     Q_INVOKABLE void searchVerse(const QString &query);
     Q_INVOKABLE void navigateTo(const QString &reference);
+    Q_INVOKABLE void toggleBookmark();
 
 signals:
     void stateChanged();
@@ -58,6 +60,8 @@ private:
     QString dataPath(const QString &fileName) const;
     bool loadCorpus();
     bool loadLexicon();
+    void loadPreferences();
+    void savePreferences();
     void loadDemoCorpus();
     QVariantMap wordState(const TokenRecord &word) const;
     QVariantMap verseState(const VerseRecord &verse) const;
@@ -80,4 +84,6 @@ private:
     int m_occurrencePage = 0;
     int m_occurrencePageSize = 4;
     bool m_usingImportedCorpus = false;
+    QSettings m_settings;
+    QStringList m_bookmarks;
 };

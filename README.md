@@ -10,6 +10,7 @@ Move. The current build includes:
 - related lexical-family links that jump to another tagged word in the verse
 - verse search, chapter reading, and book/chapter/verse browsing
 - page-sized Strong's occurrence lookup with offline navigation
+- persistent verse bookmarks and last-passage resume
 - a desktop preview and screenshot mode
 - a frontend/backend AppLoad split with a compact bundled corpus
 

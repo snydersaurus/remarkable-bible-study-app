@@ -18,6 +18,7 @@ Rectangle {
     signal navigate(string direction)
     signal searchVerse(string query)
     signal navigateTo(string reference)
+    signal toggleBookmark()
     signal occurrencePageSizeChanged(int size)
 
     property int reportedOccurrencePageSize: 0
@@ -312,7 +313,8 @@ Rectangle {
                 Text {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    text: root.v("reference", "Genesis 1:1")
+                    text: root.mode === "bookmarks"
+                          ? "BOOKMARKS" : root.v("reference", "Genesis 1:1")
                     color: root.ink
                     font.pixelSize: root.compactMode ? 38 : (root.landscape ? 70 : 64)
                     font.weight: Font.Bold
@@ -322,7 +324,11 @@ Rectangle {
                     anchors.right: prevButton.left
                     anchors.rightMargin: root.compactMode ? 12 : 28
                     anchors.verticalCenter: parent.verticalCenter
-                    text: root.mode === "read" ? "READING VIEW" : root.v("corpusStatus", "DEMO CORPUS")
+                    text: root.mode === "read"
+                          ? "READING VIEW"
+                          : (root.mode === "bookmarks"
+                             ? root.v("bookmarkCount", 0) + " SAVED"
+                             : root.v("corpusStatus", "DEMO CORPUS"))
                     color: root.faint
                     font.pixelSize: root.compactMode ? 16 : 27
                     font.weight: Font.Bold
@@ -337,10 +343,11 @@ Rectangle {
                     width: root.compactMode ? 44 : 68
                     height: root.compactMode ? 44 : 68
                     border.width: root.compactMode ? 2 : 4
-                    border.color: (root.mode === "read"
-                                   ? root.v("canPrevChapter", false)
-                                   : root.v("canPrev", false))
-                                  ? root.ink : root.faint
+                    border.color: root.mode === "bookmarks" ? root.faint
+                                  : ((root.mode === "read"
+                                      ? root.v("canPrevChapter", false)
+                                      : root.v("canPrev", false))
+                                     ? root.ink : root.faint)
                     color: root.paper
 
                     Text {
@@ -352,9 +359,10 @@ Rectangle {
                     }
                     MouseArea {
                         anchors.fill: parent
-                        enabled: root.mode === "read"
-                                 ? root.v("canPrevChapter", false)
-                                 : root.v("canPrev", false)
+                        enabled: root.mode !== "bookmarks"
+                                 && (root.mode === "read"
+                                     ? root.v("canPrevChapter", false)
+                                     : root.v("canPrev", false))
                         onClicked: root.navigate(root.mode === "read"
                                                  ? "prevChapter" : "prev")
                     }
@@ -367,10 +375,11 @@ Rectangle {
                     width: root.compactMode ? 44 : 68
                     height: root.compactMode ? 44 : 68
                     border.width: root.compactMode ? 2 : 4
-                    border.color: (root.mode === "read"
-                                   ? root.v("canNextChapter", false)
-                                   : root.v("canNext", false))
-                                  ? root.ink : root.faint
+                    border.color: root.mode === "bookmarks" ? root.faint
+                                  : ((root.mode === "read"
+                                      ? root.v("canNextChapter", false)
+                                      : root.v("canNext", false))
+                                     ? root.ink : root.faint)
                     color: root.paper
 
                     Text {
@@ -382,9 +391,10 @@ Rectangle {
                     }
                     MouseArea {
                         anchors.fill: parent
-                        enabled: root.mode === "read"
-                                 ? root.v("canNextChapter", false)
-                                 : root.v("canNext", false)
+                        enabled: root.mode !== "bookmarks"
+                                 && (root.mode === "read"
+                                     ? root.v("canNextChapter", false)
+                                     : root.v("canNext", false))
                         onClicked: root.navigate(root.mode === "read"
                                                  ? "nextChapter" : "next")
                     }
@@ -1120,6 +1130,71 @@ Rectangle {
                         }
                     }
                 }
+
+                Item {
+                    id: bookmarksView
+                    anchors.fill: parent
+                    visible: root.mode === "bookmarks"
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        text: "SAVED PASSAGES"
+                        color: root.faint
+                        font.pixelSize: root.compactMode ? 18 : 28
+                        font.weight: Font.Bold
+                        font.letterSpacing: root.compactMode ? 1 : 2
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "No bookmarks yet"
+                        color: root.faint
+                        font.pixelSize: root.compactMode ? 20 : 30
+                        visible: root.v("bookmarks", []).length === 0
+                    }
+
+                    ListView {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.topMargin: root.compactMode ? 46 : 70
+                        clip: true
+                        spacing: root.compactMode ? 8 : 12
+                        model: root.v("bookmarks", [])
+
+                        delegate: Rectangle {
+                            required property var modelData
+                            width: ListView.view.width
+                            height: root.compactMode ? 58 : 72
+                            color: root.paper
+                            border.width: root.compactMode ? 2 : 3
+                            border.color: root.ink
+
+                            Text {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.leftMargin: root.compactMode ? 12 : 18
+                                anchors.rightMargin: root.compactMode ? 12 : 18
+                                text: modelData.reference + "  ·  " + modelData.text
+                                color: root.ink
+                                font.pixelSize: root.compactMode ? 18 : 28
+                                font.weight: Font.Bold
+                                elide: Text.ElideRight
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    root.navigateTo(modelData.reference)
+                                    root.mode = "study"
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             Item {
@@ -1127,15 +1202,54 @@ Rectangle {
                 width: parent.width
                 height: root.compactMode ? 44 : 58
 
-                Text {
-                    visible: false
+                Rectangle {
+                    id: bookmarkToggleButton
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    text: ""
-                    color: root.faint
-                    font.pixelSize: 24
-                    font.weight: Font.Bold
-                    font.letterSpacing: 2
+                    width: root.compactMode ? 112 : 168
+                    height: root.compactMode ? 36 : 48
+                    color: root.v("isBookmarked", false) ? root.accent : root.paper
+                    border.width: root.compactMode ? 2 : 3
+                    border.color: root.v("isBookmarked", false) ? root.accent : root.ink
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.v("isBookmarked", false) ? "SAVED" : "BOOKMARK"
+                        color: root.v("isBookmarked", false) ? root.paper : root.ink
+                        font.pixelSize: root.compactMode ? 13 : 19
+                        font.weight: Font.Bold
+                        font.letterSpacing: root.compactMode ? 0 : 1
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: root.mode !== "bookmarks"
+                        onClicked: root.toggleBookmark()
+                    }
+                }
+
+                Rectangle {
+                    id: bookmarksButton
+                    anchors.left: bookmarkToggleButton.right
+                    anchors.leftMargin: root.compactMode ? 8 : 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: root.compactMode ? 112 : 168
+                    height: root.compactMode ? 36 : 48
+                    color: root.mode === "bookmarks" ? root.ink : root.paper
+                    border.width: root.compactMode ? 2 : 3
+                    border.color: root.ink
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "BOOKMARKS"
+                        color: root.mode === "bookmarks" ? root.paper : root.ink
+                        font.pixelSize: root.compactMode ? 13 : 19
+                        font.weight: Font.Bold
+                        font.letterSpacing: root.compactMode ? 0 : 1
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: root.mode = root.mode === "bookmarks" ? "study" : "bookmarks"
+                    }
                 }
 
                 Text {

@@ -16,6 +16,7 @@ constexpr quint32 MsgGoBack = 6;
 constexpr quint32 MsgSearchVerse = 7;
 constexpr quint32 MsgNavigateTo = 9;
 constexpr quint32 MsgOccurrencePageSize = 10;
+constexpr quint32 MsgToggleBookmark = 11;
 }
 
 int main(int argc, char *argv[])
@@ -68,6 +69,9 @@ int main(int argc, char *argv[])
             break;
         case MsgOccurrencePageSize:
             data.setOccurrencePageSize(payload.trimmed().toInt());
+            break;
+        case MsgToggleBookmark:
+            data.toggleBookmark();
             break;
         case MsgGeometry:
             qInfo("frontend window: %s", payload.constData());

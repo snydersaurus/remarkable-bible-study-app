@@ -15,6 +15,7 @@ Item {
     readonly property int msgSearchVerse: 7
     readonly property int msgNavigateTo: 9
     readonly property int msgOccurrencePageSize: 10
+    readonly property int msgToggleBookmark: 11
 
     function reportGeometry() {
         appload.sendMessage(root.msgGeometry,
@@ -52,6 +53,7 @@ Item {
         onNavigate: appload.sendMessage(root.msgNavigate, direction)
         onSearchVerse: appload.sendMessage(root.msgSearchVerse, query)
         onNavigateTo: appload.sendMessage(root.msgNavigateTo, reference)
+        onToggleBookmark: appload.sendMessage(root.msgToggleBookmark, "")
         onOccurrencePageSizeChanged: appload.sendMessage(root.msgOccurrencePageSize,
                                                          String(size))
     }

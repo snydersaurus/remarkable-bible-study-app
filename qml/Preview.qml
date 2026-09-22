@@ -22,5 +22,6 @@ Window {
         onNavigate: feed.navigate(direction)
         onSearchVerse: feed.searchVerse(query)
         onNavigateTo: feed.navigateTo(reference)
+        onToggleBookmark: feed.toggleBookmark()
     }
 }

@@ -14,6 +14,15 @@ namespace {
 
 constexpr int maxOccurrencePageSize = 12;
 
+QString normalizedStrongId(const QString &value)
+{
+    if (value.size() < 2)
+        return value;
+    bool ok = false;
+    const int number = value.mid(1).toInt(&ok);
+    return ok ? value.left(1) + QString::number(number) : value;
+}
+
 QVariantMap lexicon(const QString &id,
                     const QString &language,
                     const QString &lemma,
@@ -148,7 +157,10 @@ const QHash<QString, QStringList> &bookAliases()
 
 } // namespace
 
-BibleData::BibleData(QObject *parent) : QObject(parent)
+BibleData::BibleData(QObject *parent)
+    : QObject(parent),
+      m_settings(QSettings::IniFormat, QSettings::UserScope,
+                 QStringLiteral("The Word"), QStringLiteral("word-study"))
 {
     const bool corpusLoaded = loadCorpus();
     const bool lexiconLoaded = loadLexicon();
@@ -174,6 +186,7 @@ BibleData::BibleData(QObject *parent) : QObject(parent)
     addRelated(QStringLiteral("G3004"), {QStringLiteral("G3056")});
 
     Q_UNUSED(lexiconLoaded);
+    loadPreferences();
     rebuildState();
 }
 
@@ -329,6 +342,17 @@ bool BibleData::loadLexicon()
         if (gloss.isEmpty())
             gloss = definition;
 
+        const QString derivation = source.value(QStringLiteral("derivation")).toString();
+        QStringList related;
+        static const QRegularExpression strongReference(
+            QStringLiteral("\\b([HG]\\d+)\\b"));
+        QRegularExpressionMatchIterator matches = strongReference.globalMatch(derivation);
+        while (matches.hasNext()) {
+            const QString relatedId = normalizedStrongId(matches.next().captured(1));
+            if (relatedId != id && !related.contains(relatedId))
+                related.append(relatedId);
+        }
+
         QVariantMap entry = lexicon(
             id,
             language,
@@ -337,8 +361,7 @@ bool BibleData::loadLexicon()
             readableTransliteration(source.value(QStringLiteral("pron")).toString()),
             gloss,
             definition,
-            QStringLiteral("Strong's lexical entry"),
-            {});
+            QStringLiteral("Strong's lexical entry"), related);
 
         QString partOfSpeech = source.value(QStringLiteral("partOfSpeech")).toString();
         if (partOfSpeech.isEmpty())
@@ -347,8 +370,7 @@ bool BibleData::loadLexicon()
             = partOfSpeech.isEmpty()
                   ? QStringLiteral("Not included in this dictionary")
                   : readableTransliteration(partOfSpeech);
-        entry[QStringLiteral("derivation")]
-            = readableTransliteration(source.value(QStringLiteral("derivation")).toString());
+        entry[QStringLiteral("derivation")] = readableTransliteration(derivation);
         entry[QStringLiteral("usageOutline")] = gloss;
         m_lexicon.insert(id, entry);
     }
@@ -516,6 +538,30 @@ QVariantMap BibleData::state() const
     return m_state;
 }
 
+void BibleData::loadPreferences()
+{
+    const QStringList savedBookmarks = m_settings.value(QStringLiteral("bookmarks"))
+                                            .toStringList();
+    for (const QString &reference : savedBookmarks) {
+        if (indexForReference(reference) >= 0 && !m_bookmarks.contains(reference))
+            m_bookmarks.append(reference);
+    }
+
+    const QString lastReference = m_settings.value(QStringLiteral("lastReference"))
+                                      .toString();
+    const int lastIndex = indexForReference(lastReference);
+    if (lastIndex >= 0)
+        m_verseIndex = lastIndex;
+}
+
+void BibleData::savePreferences()
+{
+    m_settings.setValue(QStringLiteral("lastReference"),
+                        m_verses.isEmpty() ? QString() : m_verses.at(m_verseIndex).reference);
+    m_settings.setValue(QStringLiteral("bookmarks"), m_bookmarks);
+    m_settings.sync();
+}
+
 QVariantList BibleData::occurrencesFor(const QString &strongId, int page) const
 {
     QVariantList occurrences;
@@ -674,6 +720,21 @@ void BibleData::rebuildState()
         books.append(bookState);
     }
 
+    QVariantList bookmarks;
+    for (const QString &reference : m_bookmarks) {
+        const int bookmarkIndex = indexForReference(reference);
+        if (bookmarkIndex < 0)
+            continue;
+        const VerseRecord &bookmarkVerse = m_verses.at(bookmarkIndex);
+        QVariantMap bookmark;
+        bookmark[QStringLiteral("reference")] = bookmarkVerse.reference;
+        bookmark[QStringLiteral("book")] = bookmarkVerse.book;
+        bookmark[QStringLiteral("chapter")] = bookmarkVerse.chapter;
+        bookmark[QStringLiteral("verse")] = bookmarkVerse.verse;
+        bookmark[QStringLiteral("text")] = bookmarkVerse.text;
+        bookmarks.append(bookmark);
+    }
+
     m_state = currentState;
     m_state[QStringLiteral("loaded")] = true;
     m_state[QStringLiteral("translation")] = QStringLiteral("KJV");
@@ -709,6 +770,10 @@ void BibleData::rebuildState()
     m_state[QStringLiteral("canGoBack")] = !m_selectionHistory.isEmpty();
     m_state[QStringLiteral("chapterVerses")] = chapterVerses;
     m_state[QStringLiteral("books")] = books;
+    m_state[QStringLiteral("bookmarks")] = bookmarks;
+    m_state[QStringLiteral("bookmarkCount")] = bookmarks.size();
+    m_state[QStringLiteral("isBookmarked")]
+        = m_bookmarks.contains(current.reference);
     const int occurrenceTotal = occurrenceCountFor(strongId);
     const int occurrencePageCount = occurrenceTotal > 0
                                         ? (occurrenceTotal + m_occurrencePageSize - 1)
@@ -725,6 +790,7 @@ void BibleData::rebuildState()
     m_state[QStringLiteral("canNextOccurrencePage")]
         = m_occurrencePage + 1 < occurrencePageCount;
     m_state[QStringLiteral("searchStatus")] = m_searchStatus;
+    savePreferences();
     emit stateChanged();
 }
 
@@ -884,5 +950,18 @@ void BibleData::navigateTo(const QString &reference)
     m_selectionHistory.clear();
     m_searchStatus.clear();
     m_occurrencePage = 0;
+    rebuildState();
+}
+
+void BibleData::toggleBookmark()
+{
+    if (m_verses.isEmpty())
+        return;
+
+    const QString reference = m_verses.at(m_verseIndex).reference;
+    if (m_bookmarks.contains(reference))
+        m_bookmarks.removeAll(reference);
+    else
+        m_bookmarks.prepend(reference);
     rebuildState();
 }

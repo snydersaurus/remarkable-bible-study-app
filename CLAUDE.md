@@ -13,6 +13,13 @@ the device and packaging conventions in [docs/PLATFORM.md](docs/PLATFORM.md).
 - No animations, gradients, dense fills, or network dependency should be added.
 - Notes are intentionally not part of the current product.
 
+## Tablet deployment reminder
+
+Always build the current revision before deploying. Docker Desktop must have a
+healthy Linux **Server** in `docker version`; restarting Docker may be needed
+if BuildKit reports an I/O error. The existing `appload-native/out` bundle can
+be stale, so never deploy it as a substitute for a successful build.
+
 ## Next data step
 
 If the dictionary is enriched later, keep the UI-facing state stable:

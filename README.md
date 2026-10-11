@@ -9,6 +9,7 @@ Move. The current build includes:
   derivation, and definition
 - related lexical-family links that jump to another tagged word in the verse
 - verse search, chapter reading, and book/chapter/verse browsing
+- adjustable reading font size and independently scrollable verse details
 - page-sized Strong's occurrence lookup with offline navigation
 - persistent verse bookmarks and last-passage resume
 - a desktop preview and screenshot mode

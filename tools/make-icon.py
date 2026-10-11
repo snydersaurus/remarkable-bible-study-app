@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create the neutral 600px launcher icon without third-party libraries."""
+"""Create the 600px Bible launcher icon without third-party libraries."""
 
 import struct
 import zlib
@@ -8,7 +8,6 @@ from pathlib import Path
 SIZE = 600
 WHITE = (255, 255, 255, 255)
 BLACK = (0, 0, 0, 255)
-ACCENT = (164, 18, 63, 255)
 
 pixels = [[WHITE for _ in range(SIZE)] for _ in range(SIZE)]
 
@@ -31,15 +30,18 @@ def line(x0, y0, x1, y1, width, color):
                     set_pixel(x + dx, y + dy, color)
 
 
-# Open-book mark with a restrained accent rule.
-line(110, 150, 300, 205, 26, BLACK)
-line(300, 205, 490, 150, 26, BLACK)
-line(110, 150, 110, 420, 26, BLACK)
-line(110, 420, 300, 475, 26, BLACK)
-line(300, 475, 490, 420, 26, BLACK)
-line(490, 420, 490, 150, 26, BLACK)
-line(300, 205, 300, 475, 24, BLACK)
-line(155, 525, 445, 525, 18, ACCENT)
+# A closed Bible, with a bound spine, visible pages, and a cover cross.
+line(140, 95, 460, 95, 26, BLACK)
+line(460, 95, 460, 435, 26, BLACK)
+line(460, 435, 140, 435, 26, BLACK)
+line(140, 435, 140, 95, 26, BLACK)
+line(190, 95, 190, 435, 18, BLACK)
+line(140, 435, 140, 495, 26, BLACK)
+line(140, 495, 460, 495, 26, BLACK)
+line(460, 495, 460, 435, 26, BLACK)
+line(180, 465, 430, 465, 8, BLACK)
+line(325, 180, 325, 350, 26, BLACK)
+line(265, 240, 385, 240, 26, BLACK)
 
 
 def chunk(kind, data):

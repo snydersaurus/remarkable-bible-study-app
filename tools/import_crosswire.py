@@ -92,7 +92,11 @@ VERSE_RE = re.compile(
     r'<verse\s+osisID="([^"]+)"[^>]*/>(.*?)<verse\s+eID="[^"]+"\s*/>',
     re.DOTALL,
 )
-WORD_RE = re.compile(r"<w\b([^>]*)>(.*?)</w>", re.DOTALL)
+# Some source words are represented by self-closing tags with no printed
+# English text, for example the article immediately before Matthew 13:5's
+# "stony places". Do not let a self-closing tag become the opening half of
+# the next paired word.
+WORD_RE = re.compile(r"<w\b([^>]*?)(?<!/)>(.*?)</w>", re.DOTALL)
 ATTR_RE = re.compile(r'([A-Za-z_:][\w:.-]*)="([^"]*)"')
 TAG_RE = re.compile(r"<[^>]+>")
 STRONG_RE = re.compile(r"strong:([HG]\d+)")

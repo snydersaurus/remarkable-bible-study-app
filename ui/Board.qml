@@ -8,6 +8,7 @@ Rectangle {
     property string searchDraft: ""
     property string browseBook: ""
     property int browseChapter: 1
+    property int readingFontSize: 44
     // The Paper Pro uses the full fixed canvas. The desktop preview opts into
     // a separate compact layout so it remains readable beside a notes app.
     property bool compactMode: false
@@ -86,6 +87,11 @@ Rectangle {
         })
     }
 
+    function changeReadingFontSize(delta) {
+        root.readingFontSize = Math.max(32,
+                                        Math.min(64, root.readingFontSize + delta))
+    }
+
     function reportOccurrencePageSize() {
         Qt.callLater(function() {
             var available = occurrencesList.height
@@ -110,6 +116,7 @@ Rectangle {
     }
 
     onModeChanged: syncReadingPosition()
+    onReadingFontSizeChanged: syncReadingPosition()
     onWidthChanged: reportOccurrencePageSize()
     onHeightChanged: reportOccurrencePageSize()
 
@@ -419,29 +426,41 @@ Rectangle {
                         width: root.splitStudy ? parent.width * 0.54 : parent.width
                         height: root.splitStudy ? parent.height : parent.height * 0.40
 
-                        Flow {
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.topMargin: 26
-                            anchors.bottom: parent.bottom
-                            spacing: 16
+                        Flickable {
+                            id: verseScroll
+                            anchors.fill: parent
+                            contentWidth: width
+                            contentHeight: Math.max(height,
+                                                   verseWords.y
+                                                   + verseWords.height + 24)
+                            flickableDirection: Flickable.VerticalFlick
+                            boundsBehavior: Flickable.StopAtBounds
+                            clip: true
 
-                            Repeater {
-                                model: root.v("words", [])
+                            Flow {
+                                id: verseWords
+                                x: 0
+                                y: 26
+                                width: verseScroll.width
+                                height: childrenRect.height
+                                spacing: 16
 
-                                WordToken {
-                                    required property var modelData
-                                    required property int index
-                                    label: modelData.text
-                                    tagged: modelData.tagged
-                                    selected: index === root.v("selectedIndex", 0)
-                                    textSize: root.compactMode ? 36
-                                                               : (root.landscape ? 54 : 60)
-                                    implicitHeight: textSize * 1.5
-                                    ink: root.ink
-                                    rule: root.faint
-                                    onTapped: root.wordSelected(index)
+                                Repeater {
+                                    model: root.v("words", [])
+
+                                    WordToken {
+                                        required property var modelData
+                                        required property int index
+                                        label: modelData.text
+                                        tagged: modelData.tagged
+                                        selected: index === root.v("selectedIndex", 0)
+                                        textSize: root.compactMode ? 36
+                                                                   : (root.landscape ? 54 : 60)
+                                        implicitHeight: textSize * 1.5
+                                        ink: root.ink
+                                        rule: root.faint
+                                        onTapped: root.wordSelected(index)
+                                    }
                                 }
                             }
                         }
@@ -825,7 +844,8 @@ Rectangle {
                     Text {
                         id: readingHeader
                         anchors.left: parent.left
-                        anchors.right: parent.right
+                        anchors.right: readingSizeControls.left
+                        anchors.rightMargin: root.compactMode ? 12 : 20
                         anchors.top: parent.top
                         text: "READING VIEW  ·  " + root.v("book", "Genesis")
                               + " " + root.v("chapter", 1)
@@ -833,6 +853,73 @@ Rectangle {
                         font.pixelSize: 28
                         font.weight: Font.Bold
                         font.letterSpacing: 2
+                    }
+
+                    Row {
+                        id: readingSizeControls
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        spacing: root.compactMode ? 6 : 10
+
+                        Rectangle {
+                            width: root.compactMode ? 48 : 72
+                            height: root.compactMode ? 42 : 56
+                            color: root.paper
+                            border.width: root.compactMode ? 2 : 3
+                            border.color: root.readingFontSize <= 32
+                                          ? root.faint : root.ink
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "A−"
+                                color: parent.border.color
+                                font.pixelSize: root.compactMode ? 17 : 25
+                                font.weight: Font.Bold
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                enabled: root.readingFontSize > 32
+                                onClicked: root.changeReadingFontSize(-4)
+                            }
+                        }
+
+                        Rectangle {
+                            width: root.compactMode ? 58 : 86
+                            height: root.compactMode ? 42 : 56
+                            color: root.ink
+                            border.width: root.compactMode ? 2 : 3
+                            border.color: root.ink
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: root.readingFontSize
+                                color: root.paper
+                                font.pixelSize: root.compactMode ? 15 : 22
+                                font.weight: Font.Bold
+                            }
+                        }
+
+                        Rectangle {
+                            width: root.compactMode ? 48 : 72
+                            height: root.compactMode ? 42 : 56
+                            color: root.paper
+                            border.width: root.compactMode ? 2 : 3
+                            border.color: root.readingFontSize >= 64
+                                          ? root.faint : root.ink
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "A+"
+                                color: parent.border.color
+                                font.pixelSize: root.compactMode ? 17 : 25
+                                font.weight: Font.Bold
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                enabled: root.readingFontSize < 64
+                                onClicked: root.changeReadingFontSize(4)
+                            }
+                        }
                     }
 
                     ListView {
@@ -882,7 +969,9 @@ Rectangle {
                                 anchors.rightMargin: 24
                                 text: modelData.text
                                 color: root.ink
-                                font.pixelSize: root.landscape ? 38 : 44
+                                font.pixelSize: root.landscape
+                                                   ? Math.max(32, root.readingFontSize - 6)
+                                                   : root.readingFontSize
                                 lineHeight: 1.15
                                 lineHeightMode: Text.ProportionalHeight
                                 wrapMode: Text.WordWrap

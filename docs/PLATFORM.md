@@ -55,6 +55,24 @@ so a backend that AppLoad has left running is not overwritten in place.
 
 ## Release workflow
 
+Before deploying a feature build, confirm that Docker Desktop's Linux server
+is healthy. The Docker client can be installed and responding while the server
+is still starting or its BuildKit storage is unhealthy; in either case the
+build will fail before producing a new bundle. Do not run `deploy.sh` against
+an old `appload-native/out` directory.
+
+On this Mac, the shared SDK installer is kept with the MLB app. If the pinned
+image is not already present, pass that installer to the build:
+
+```bash
+export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
+docker version                 # confirm both Client and Server are shown
+IMAGE=rmpp-sdk-5.7 ./build.sh \
+  ../mlb-scoreboard/docker/rmpp-sdk.sh
+```
+
+Only after `build.sh` completes successfully should the tablet be changed.
+
 For development:
 
 ```bash
